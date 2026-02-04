@@ -1,10 +1,29 @@
 
 var A_fish = {} ; 
+let A_value_history = [];
 var I_val_min = -10;
 var I_val_max = 40;
-for (let I_index = 0 ; I_index < 20 ; I_index++){
-	A_fish[I_index] = Math.floor(Math.random() * (I_val_max - I_val_min) + I_val_min);
+
+const ctx = document.getElementById('myChart');
+
+const chart = new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: [],        // start empty
+    datasets: [{
+      label: 'History of Temperature',
+      data: [],
+    }]
+  }
+});
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
 }
+
+A_fish = Array.from({length: 20}, () => getRandomInt(I_val_min, I_val_max));
 
 function check_color(){
     let I_value = A_fish[I_caramel];
@@ -31,12 +50,37 @@ var I_caramel = 0;
 let O_element2 = document.getElementById("funny_sentence");
 
 function change_value(){
-    O_element.textContent = A_fish[I_caramel];
-    check_color();
-    I_caramel = (I_caramel + 1) % 20;
+  add_to_history();
+  refreshChart(A_value_history.slice(Math.max(A_value_history.length - 1000, 1)));
+  O_element.textContent = A_fish[I_caramel];
+  check_color();
+  if (I_caramel >= 19){
+    A_fish = Array.from({length: 20}, () => getRandomInt(I_val_min, I_val_max));
+  }
+  I_caramel = (I_caramel + 1) % 20;
 }
 
-setInterval(change_value, 2000);
+function refreshChart(value_history) {
+  chart.data.labels = value_history.map((_, i) => i + 1); // or timestampsh
+  chart.data.datasets[0].data = value_history;
+  chart.data.datasets[0].backgroundColor =
+    value_history.map(v => getBarColor(v));
+  chart.update();
+}
+
+function getBarColor(value) {
+  if (value <= 0) return '#4FC3F7';      // cold (blue)
+  if (value <= 20) return '#81C784';     // mild (green)
+  if (value <= 30) return '#FFB74D';     // warm (orange)
+  return '#E57373';                      // hot (red)
+}
+
+function add_to_history(){
+    let I_value = A_fish[(I_caramel - 1 + 20) % 20];
+    A_value_history.push(I_value);
+}
+
+setInterval(change_value, 2);
 
 /*
  *   This content is licensed according to the W3C Software License at
@@ -159,14 +203,10 @@ class TabsManual {
     }
   }
 
-  // Since this example uses buttons for the tabs, the click onr also is activated
-  // with the space and enter keys
   onClick(event) {
     this.setSelectedTab(event.currentTarget);
   }
 }
-
-// Initialize tablist
 
 window.addEventListener('load', function () {
   var tablists = document.querySelectorAll('[role=tablist].manual');
